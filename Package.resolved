@@ -121,7 +121,7 @@
     {
       "identity" : "gaea-plugin-kit",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/xocialize/gaea-plugin-kit.git",
+      "location" : "https://github.com/xocialize-code/gaea-plugin-kit.git",
       "state" : {
         "revision" : "04159b0fd09a226849b467e66670b74c28679611",
         "version" : "0.3.1"

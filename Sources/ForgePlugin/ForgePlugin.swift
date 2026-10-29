@@ -277,7 +277,7 @@ public let forgePlugin = GaeaPluginDefinition(
     version: "0.2.0",
     minGaea: "0.6.0",
     team: "CFZS6RXUCP",
-    repo: "https://github.com/xocialize/gaea-plugin-forge",
+    repo: "https://github.com/xocialize-code/gaea-plugin-forge",
     title: "Forge processing pack",
     summary: "ForgeCore's image models in one process: inpaint (LaMa, MI-GAN), upscale (NERVE, RealPLKSR, HEART, Anime4K VL, "
         + "and VOSR2 and Nacre behind the text guard), matte (BiRefNet), segment (EdgeTAM, SAM 2.1), restore (NAFNet, Restormer, "

@@ -1,14 +1,14 @@
 # gaea-plugin-forge
 
 The processing pack: [ForgeCore](https://github.com/xocialize/ForgeCore)'s image models as one
-[Gaea](https://github.com/xocialize/gaea) plugin, in one process. A worker costs about 146 MB, so small models share
+[Gaea](https://github.com/xocialize-code/gaea) plugin, in one process. A worker costs about 146 MB, so small models share
 one. Each model is registered in the configuration ForgeCore's `ForgeEngineService` registers it with, under the id
 mlx-image-runtime's catalog gives it, so Gaea's image normalizer composes them with the Image profile's rules (exact
 ×scale, black-mask pixels kept, alpha re-applied, sizes) and chooses among them by its measured tiers. Add it by its
 repo URL:
 
 ```bash
-gaea plugins add https://github.com/xocialize/gaea-plugin-forge
+gaea plugins add https://github.com/xocialize-code/gaea-plugin-forge
 ```
 
 ## What it offers
@@ -63,7 +63,7 @@ ForgeCore's own `EngineImageEnhancer` (`sign-256.png` takes Nacre through word p
 rebuilds the inputs 0.2.0 added.
 
 `scripts/release.sh` builds, checks, notarizes with the fleet's `mlx-notary` profile, and publishes the GitHub release.
-See the [demo plugin](https://github.com/xocialize/gaea-plugin-demo) for signing, notarization and CI secrets.
+See the [demo plugin](https://github.com/xocialize-code/gaea-plugin-demo) for signing, notarization and CI secrets.
 
 ## Licence
 
