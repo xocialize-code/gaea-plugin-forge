@@ -13,17 +13,18 @@ B=$ROOT/dist/forge.gaeaplugin
 MODELS=${CHECK_MODELS_ROOT:-$HOME/Library/Application Support/MLXEngine/Models}
 BIN=$(xcrun swift build -c release --show-bin-path)
 CHECK=$BIN/gaea-plugin-check; INPROC=$BIN/forge-inproc
-FOX=$ROOT/scripts/fixtures/fox-256.png; MASK=$ROOT/scripts/fixtures/mask-256.png; FACE=$ROOT/scripts/fixtures/face-512.png
+FX=$ROOT/scripts/fixtures
+FOX=$FX/fox-256.png; MASK=$FX/mask-256.png; FACE=$FX/face-512.png
 PIXDIFF=$OUT/pixdiff; swiftc -O -o $PIXDIFF $ROOT/scripts/pixdiff.swift
 LOG=$OUT/golden.log; : > $LOG
 pass=0; fail=0
 say() { print -r -- "$*" | tee -a $LOG }
 
-# name, plugin model, lane, MES operation, GPP params, ForgeModel, forge-inproc options…
+# name, plugin model, lane, MES operation (or helper), GPP params, ForgeModel, forge-inproc options… IMG= picks the input.
 golden() {
   local name=$1 model=$2 lane=$3 op=$4 params=$5 forge=$6; shift 6
   # The face models get a portrait: on a picture without a face they hand it back unchanged, which proves nothing.
-  local img=$FOX; [[ $model == *-face ]] && img=$FACE
+  local img=${IMG:-$FOX}; [[ $model == *-face ]] && img=$FACE
   local inputs=(--input "image=$img"); [[ $op == image.fill ]] && inputs+=(--input "mask=$MASK")
   $CHECK $B --operation $op --model $model --lane $lane --params $params $inputs --models-root "$MODELS" --budget 64000000000 \
     --timeout 300 --session $OUT/$name.gpp > $OUT/$name-gpp.log 2>&1
@@ -60,5 +61,38 @@ golden restormer-denoise restormer-denoise fp32 image.restore '{}' restormerDeno
 golden scunet scunet-denoise fp32 image.restore '{}' denoiseBlind
 golden gfpgan gfpgan-face fp32 image.restore '{}' faceRestore
 golden restoreformer restoreformer-face fp32 image.restore '{}' faceRestoreVQ
+# A score is a value: the worker's, as GPP carries it, against the in-process Float's own digits.
+golden_score() {
+  local name=$1 model=$2 lane=$3; local img=${IMG:-$FOX}
+  $CHECK $B --operation image.score --model $model --lane $lane --params '{}' --input "image=$img" --models-root "$MODELS" \
+    --budget 64000000000 --timeout 300 --session $OUT/$name.gpp > $OUT/$name-gpp.log 2>&1
+  $INPROC --model qualityScore --image $img --models-root "$MODELS" --out $OUT/$name-inproc.png > $OUT/$name-inproc.json 2>> $LOG
+  local verdict=$(python3 - $OUT/$name-gpp.log $OUT/$name-inproc.json <<'PY'
+import json, re, struct, sys
+line = next((l for l in open(sys.argv[1]) if "outputs [" in l), "")
+outputs = json.loads(line[line.index("outputs [") + 8:]) if line else []
+gpp = next((o["value"] for o in outputs if o.get("name") == "score"), None)
+sub = next((o["value"] for o in outputs if o.get("name") == "subscores"), {})
+inproc = json.loads([l for l in open(sys.argv[2]) if l.startswith("{")][-1])
+f32 = lambda v: struct.unpack("f", struct.pack("f", float(v)))[0]
+same = gpp is not None and f32(gpp) == f32(inproc["score"]) and {k: f32(v) for k, v in sub.items()} == {k: f32(v) for k, v in inproc["subscores"].items()}
+print(("same" if same else "differs") + f" score {gpp} / {inproc['score']}, {len(sub)} subscores")
+PY
+)
+  if [[ $verdict == same* ]]; then pass=$((pass+1)); say "PASS  $name ($model $lane, image.score): the same value, ${verdict#same }; in-process $(cat $OUT/$name-inproc.json)"
+  else fail=$((fail+1)); say "FAIL  $name ($model $lane, image.score): $verdict"; fi
+}
+
+# 0.2.0 (AB-T-0377)
+golden drunet drunet-denoise fp32 image.restore '{}' denoiseStrength
+IMG=$FX/fox-dark-256.png golden cidnet cidnet-relight fp32 image.relight '{}' relight
+IMG=$FX/fox-grey-256.png golden ddcolor ddcolor-colorize fp16 image.colorize '{}' colorize
+IMG=$FX/fox-scratched-256.png golden bopbtl bopbtl-defects fp32 x-gaea.image.defects '{"kind":"binary"}' defectDetect --kind binary
+golden anime4k anime4k-upscale fp32 image.upscale '{"scale":4}' upscaleInstant --scale 4
+golden vosr2 vosr2-upscale fp16 image.upscale '{"scale":4}' upscaleGenerative --scale 4
+golden nacre nacre-upscale fp16 image.upscale '{"scale":4}' upscaleNacre --scale 4
+IMG=$FX/sign-256.png golden nacre-sign nacre-upscale fp16 image.upscale '{"scale":2}' upscaleNacre --scale 2
+golden_score siglip2 siglip2-quality int8
+IMG=$FX/fox-grey-256.png golden_score siglip2-grey siglip2-quality int8
 say "== $pass passed, $fail failed"
 exit $(( fail > 0 ))
