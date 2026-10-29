@@ -1,5 +1,5 @@
 {
-  "originHash" : "6cfc59751e76eb4d8e8f566473c9f549fc70ecb9dfb790d8e0cf6640d05dfc9c",
+  "originHash" : "a5b30a6bb885313514d1e04975060bc254301e0cf65be051152dd0891b25c6b6",
   "pins" : [
     {
       "identity" : "anime4k-metal",
@@ -123,8 +123,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/xocialize/gaea-plugin-kit.git",
       "state" : {
-        "revision" : "0434ca828c6b85ddac448cdfc1d0264225d95277",
-        "version" : "0.2.1"
+        "revision" : "473148c1b4c52c560a50667f799ed6da8f320988",
+        "version" : "0.2.2"
       }
     },
     {

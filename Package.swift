@@ -17,7 +17,7 @@ let package = Package(
     platforms: [.macOS(.v26)], // mlx-engine-swift's MLXToolKit requires macOS 26
     dependencies: [
         kitPath.map { .package(path: $0) }
-            ?? .package(url: "https://github.com/xocialize/gaea-plugin-kit.git", from: "0.2.1"),
+            ?? .package(url: "https://github.com/xocialize/gaea-plugin-kit.git", from: "0.2.2"),
         .package(url: "https://github.com/xocialize/mlx-engine-swift.git", from: "0.72.0"),
         .package(url: "https://github.com/xocialize/ForgeCore.git", exact: "0.43.0"),
         // The model packages, at ForgeCore's floors; SwiftPM resolves one version of each for the worker and ForgeCore.

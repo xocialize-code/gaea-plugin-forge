@@ -141,7 +141,7 @@ let entries: [ForgeEntry] = [
 
 public let forgePlugin = GaeaPluginDefinition(
     id: "com.xocialize.gaea.forge",
-    version: "0.1.0",
+    version: "0.1.1",
     minGaea: "0.4.0",
     team: "CFZS6RXUCP",
     repo: "https://github.com/xocialize/gaea-plugin-forge",
