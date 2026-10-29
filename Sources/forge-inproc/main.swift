@@ -11,6 +11,10 @@ import MLXToolKit
 //
 //   forge-inproc --model <ForgeModel> --image <png> [--mask <png>] [--mode fast] [--scale 2] [--kind softAlpha|binary]
 //                [--points x,y;x,y] [--labels 1,0] [--strength s] [--threshold t] [--models-root <dir>] --out <png>
+//                [--repeat N] [--sink]
+//
+// --repeat runs the call N times after the first and prints each run's seconds (warm times); --sink binds a RunProgress
+// sink that encodes every report as a JSON line to /dev/null, as a plugin worker relays each one over GPP.
 
 var args = Array(CommandLine.arguments.dropFirst())
 func option(_ name: String) -> String? {
@@ -38,6 +42,8 @@ guard let name = option("--model"), let model = ForgeModel(rawValue: name), let 
     FileHandle.standardError.write(Data("usage: forge-inproc --model <ForgeModel> --image <png> --out <png> [options]\n".utf8))
     exit(2)
 }
+let repeats = option("--repeat").flatMap(Int.init) ?? 0
+let bindSink = args.contains("--sink")
 let modelsRoot = URL(fileURLWithPath: option("--models-root")
                      ?? NSHomeDirectory() + "/Library/Application Support/MLXEngine/Models", isDirectory: true)
 
@@ -83,26 +89,38 @@ default:
 var clock = ContinuousClock.now
 _ = try await service.engine.prepare(model.capability, package: id)
 let prepare = seconds(since: clock)
-clock = ContinuousClock.now
-let response: any CapabilityResponse
-var ran: String?
-if [.upscaleGenerative, .upscaleNacre].contains(model), let upscale = request as? ImageUpscaleRequest {
-    // pixel-agency-image-engine's route for a generative stills tier: the enhancer, behind the text guard.
-    let enhancer = await EngineImageEnhancer(service: service)
-    let outcome = try await enhancer.upscaleReporting(try EngineImageCoding.cgImage(from: upscale.image),
-                                                      factor: upscale.scale == 2 ? .x2 : .x4,
-                                                      tier: model == .upscaleNacre ? .generativeClean : .generative)
-    ran = outcome.upscaleModel
-    response = ImageUpscaleResponse(image: try EngineImageCoding.pngImage(from: outcome.image), appliedScale: upscale.scale ?? 4)
-} else {
-    response = try await service.engine.run(request, package: id)
+let devNull = FileHandle(forWritingAtPath: "/dev/null")!
+let sink: RunProgress.Sink = { report in
+    let line: [String: Any] = ["type": "progress", "stage": report.phase.rawValue, "step": report.step ?? 0, "of": report.totalSteps ?? 0]
+    devNull.write((try? JSONSerialization.data(withJSONObject: line)) ?? Data())
 }
-let run = seconds(since: clock)
+var ran: String?
+func call() async throws -> any CapabilityResponse {
+    if [.upscaleGenerative, .upscaleNacre].contains(model), let upscale = request as? ImageUpscaleRequest {
+        // pixel-agency-image-engine's route for a generative stills tier: the enhancer, behind the text guard.
+        let enhancer = await EngineImageEnhancer(service: service)
+        let outcome = try await enhancer.upscaleReporting(try EngineImageCoding.cgImage(from: upscale.image),
+                                                          factor: upscale.scale == 2 ? .x2 : .x4,
+                                                          tier: model == .upscaleNacre ? .generativeClean : .generative)
+        ran = outcome.upscaleModel
+        return ImageUpscaleResponse(image: try EngineImageCoding.pngImage(from: outcome.image), appliedScale: upscale.scale ?? 4)
+    }
+    return try await service.engine.run(request, package: id)
+}
+func timedCall() async throws -> (any CapabilityResponse, Double) {
+    let start = ContinuousClock.now
+    let r = bindSink ? try await RunProgress.$sink.withValue(sink) { try await call() } : try await call()
+    return (r, seconds(since: start))
+}
+let (response, run) = try await timedCall()
+var warm: [Double] = []
+for _ in 0..<repeats { warm.append(try await timedCall().1) }
 
 var data = Data()
 var result: [String: Any] = ["model": name, "package": id.rawValue, "prepare_s": prepare, "run_s": run,
                              "total_s": seconds(since: started), "phys_footprint": physFootprint()]
 if let ran { result["upscale_model"] = ran }
+if !warm.isEmpty { result["warm_s"] = warm }
 switch response {
 case let r as InpaintResponse: data = r.image.data
 case let r as ImageUpscaleResponse: data = r.image.data; result["applied_scale"] = r.appliedScale
