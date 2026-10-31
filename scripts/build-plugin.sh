@@ -38,9 +38,12 @@ step() { print -P "%B==> $*%b" }
 # The worker builds in a scratch folder of its own, so its bin folder holds only the resource bundles it links (the
 # package's forge-inproc reference pulls in ForgeCore's generative tiers, whose bundles don't belong in the plugin).
 SCRATCH=$ROOT/.build/plugin
-step "build $PRODUCT (release, arm64)"
-xcrun swift build -c release --arch arm64 --product $PRODUCT --scratch-path $SCRATCH
-BIN=$(xcrun swift build -c release --arch arm64 --scratch-path $SCRATCH --show-bin-path)
+# Swift Build, named explicitly: it compiles mlx-swift's .metal kernels into default.metallib. It is the default from
+# Swift 6.4 (Xcode 27); Xcode 26's SwiftPM defaults to the native build system, which skips them silently (AB-T-0382).
+SWIFTPM=(-c release --arch arm64 --scratch-path $SCRATCH --build-system swiftbuild)
+step "build $PRODUCT (release, arm64, swiftbuild)"
+xcrun swift build $SWIFTPM --product $PRODUCT
+BIN=$(xcrun swift build $SWIFTPM --show-bin-path)
 
 rm -rf $DIST && mkdir -p $DIST
 step "generate manifest.json from the plugin's code"
