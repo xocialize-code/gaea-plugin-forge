@@ -274,7 +274,7 @@ let defectDetector = model(BOPBTLDetectPackage.self, BOPBTLConfiguration(), id: 
 
 public let forgePlugin = GaeaPluginDefinition(
     id: "com.xocialize.gaea.forge",
-    version: "0.2.0",
+    version: "0.2.1",
     minGaea: "0.6.0",
     team: "CFZS6RXUCP",
     repo: "https://github.com/xocialize-code/gaea-plugin-forge",

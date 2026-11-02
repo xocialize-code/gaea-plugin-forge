@@ -1,5 +1,5 @@
 {
-  "originHash" : "a178e1989aa614aaced36773f7add7c9805a1b61f62783a8caaba8340bebeb01",
+  "originHash" : "03b37bd9e7b801844c7246420a96309d837e84063a7d3ce1b8dc39c650bd0422",
   "pins" : [
     {
       "identity" : "anime4k-metal",
@@ -213,8 +213,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/xocialize/mlx-engine-swift.git",
       "state" : {
-        "revision" : "0ea5fe69706e1a13cd0944319cc487d4fd8dd243",
-        "version" : "0.73.0"
+        "revision" : "46041603fef7b6378e26753e326828ae71b79ddf",
+        "version" : "0.73.1"
       }
     },
     {

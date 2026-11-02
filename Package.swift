@@ -21,7 +21,7 @@ let package = Package(
     dependencies: [
         kitPath.map { .package(path: $0) }
             ?? .package(url: "https://github.com/xocialize-code/gaea-plugin-kit.git", from: "0.3.1"),
-        .package(url: "https://github.com/xocialize/mlx-engine-swift.git", from: "0.72.0"),
+        .package(url: "https://github.com/xocialize/mlx-engine-swift.git", from: "0.73.1"),
         .package(url: "https://github.com/xocialize/ForgeCore.git", exact: "0.43.0"),
         // The model packages, at ForgeCore's floors; SwiftPM resolves one version of each for the worker and ForgeCore.
         .package(url: "https://github.com/xocialize/mlx-lama-swift.git", from: "0.4.0"),
