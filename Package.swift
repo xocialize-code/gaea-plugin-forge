@@ -20,16 +20,17 @@ let package = Package(
     platforms: [.macOS(.v26)], // mlx-engine-swift's MLXToolKit requires macOS 26
     dependencies: [
         kitPath.map { .package(path: $0) }
-            ?? .package(url: "https://github.com/xocialize-code/gaea-plugin-kit.git", from: "0.3.1"),
-        .package(url: "https://github.com/xocialize/mlx-engine-swift.git", from: "0.73.1"),
+            ?? .package(url: "https://github.com/xocialize-code/gaea-plugin-kit.git", from: "0.14.1"),
+        // mlx-engine-swift 0.82.1, the first on the fleet's mlx-swift 0.33.1.
+        .package(url: "https://github.com/xocialize/mlx-engine-swift.git", from: "0.82.1"),
         .package(url: "https://github.com/xocialize/ForgeCore.git", exact: "0.43.0"),
         // The model packages, at ForgeCore's floors; SwiftPM resolves one version of each for the worker and ForgeCore.
         .package(url: "https://github.com/xocialize/mlx-lama-swift.git", from: "0.4.0"),
-        .package(url: "https://github.com/xocialize/mlx-nerve-swift.git", from: "0.2.1"),
+        .package(url: "https://github.com/xocialize/mlx-nerve-swift.git", from: "0.2.2"),
         .package(url: "https://github.com/xocialize/mlx-birefnet-swift.git", from: "0.4.0"),
         .package(url: "https://github.com/xocialize/mlx-edgetam-swift.git", from: "0.6.0"),
         .package(url: "https://github.com/xocialize/mlx-nafnet-swift.git", from: "0.6.1"),
-        .package(url: "https://github.com/xocialize/mlx-realplksr-swift.git", from: "0.2.1"),
+        .package(url: "https://github.com/xocialize/mlx-realplksr-swift.git", from: "0.2.2"),
         .package(url: "https://github.com/xocialize/mlx-heart-swift.git", from: "0.2.2"),
         .package(url: "https://github.com/xocialize/mlx-restormer-swift.git", from: "0.1.1"),
         .package(url: "https://github.com/xocialize/mlx-scunet-swift.git", from: "0.1.2"),
@@ -43,8 +44,11 @@ let package = Package(
         .package(url: "https://github.com/xocialize/mlx-vosr-swift.git", from: "0.3.1"),
         .package(url: "https://github.com/xocialize/mlx-nacre-swift.git", from: "0.1.6"),
         .package(url: "https://github.com/xocialize/MaskKit.git", from: "0.5.0"),
-        // MLX itself, for one switch: BOPBTL's run goes uncompiled (ForgePlugin.swift, `defects`).
-        .package(url: "https://github.com/ml-explore/mlx-swift", from: "0.32.3"),
+        // MLX itself, for one switch: BOPBTL's run goes uncompiled (ForgePlugin.swift, `defects`). The fleet's mlx-swift
+        // fork, as mlx-engine-swift 0.82.1 takes it: 0.33.1 is upstream 0.33.0 with the vendored MLX's head-dim-split
+        // SDPA routes off, which abort or give wrong attention on M5 (AB-D-0264, AB-R-1009). Naming ml-explore's URL
+        // here, as 0.2.1 did, won over the engine's fork (one package identity) and built upstream 0.32.3.
+        .package(url: "https://github.com/xocialize/mlx-swift", from: "0.33.1"),
     ],
     targets: [
         .target(
